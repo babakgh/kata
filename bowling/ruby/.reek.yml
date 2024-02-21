@@ -1,1 +1,4 @@
 ---
+detectors:
+  IrresponsibleModule:
+    enabled: false
