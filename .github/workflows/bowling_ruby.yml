@@ -32,11 +32,13 @@ jobs:
             const lineCoverage = parseFloat(process.env.COVERAGE);
 
             if (isNaN(lineCoverage)) {
-                core.setFailed('Invalid coverage value');
+              core.setFailed('Invalid coverage value');
+            } else if (lineCoverage == 100) {
+              core.info('Perfect! Code voverage is 100%. This Is The Way!');
             } else if (lineCoverage < 90) {
-                core.setFailed(`Coverage ${lineCoverage}% is less than 90%`);
-            } else {
-                core.info(`Coverage is satisfactory: ${lineCoverage}%`);
+              core.setFailed(`Code voverage ${lineCoverage}% (less than 90%) is not acceptable`);
+            } else
+              core.info(`Code voverage ${lineCoverage}% (more than 90%) is satisfactory, but not perfect.`);
             }        
         if: ${{ !cancelled() }}        
       - name: Reek
