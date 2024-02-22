@@ -66,7 +66,7 @@ describe Bowling::Game do
     end
   end
 
-  context 'when a perfect game is played,', :ignore do
+  context 'when a perfect game is played,' do
     it 'results in a score of 300' do
       roll_many(12, 10)
       expect(game.score).to eq(300)
