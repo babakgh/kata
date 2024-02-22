@@ -3,10 +3,6 @@ on:
   push:
     paths:
     - 'bowling/ruby/**'
-    branches: [main]
-  pull_request:
-    paths:
-    - 'bowling/ruby/**'
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -24,6 +20,6 @@ jobs:
       - name: RSpec
         run: bundle exec rspec
       - name: Reek
-        run: bundle exec reek -c ./.reek_dummy.yml
+        run: bundle exec reek ./** -c ./.reek.yml -V
       - name: Rubocop
         run: bundle exec rubocop
