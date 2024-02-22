@@ -19,6 +19,34 @@ jobs:
         run: bundle install
       - name: RSpec
         run: bundle exec rspec
+      - name: Coverage
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            // Function to read the JSON file and process the 'result.line'
+            function checkCoverage() {
+                fs.readFile('./converge/.last_run.json', 'utf8', (err, data) => {
+                    if (err) {
+                        console.error('Error reading the file:', err);
+                        return;
+                    }
+
+                    try {
+                        const jsonData = JSON.parse(data);
+                        const lineCoverage = parseFloat(jsonData.result.line);
+
+                        if (lineCoverage < 90.0) {
+                            core.setFailed(`Coverage ${lineCoverage} is less than 90%`);
+                        } else {
+                            console.log(`Coverage is satisfactory: ${lineCoverage}%`);
+                        }
+                    } catch (parseErr) {
+                        console.error('Error parsing JSON:', parseErr);
+                    }
+                });
+            }
+            checkCoverage();
       - name: Reek
         run: bundle exec reek ./** -c ./.reek.yml -V
         if: ${{ !cancelled() }}
