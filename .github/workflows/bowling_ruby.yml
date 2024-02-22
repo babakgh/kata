@@ -26,7 +26,7 @@ jobs:
             const fs = require('fs');
             // Function to read the JSON file and process the 'result.line'
             function checkCoverage() {
-                fs.readFile('./converge/.last_run.json', 'utf8', (err, data) => {
+                fs.readFile('./coverage/.last_run.json', 'utf8', (err, data) => {
                     if (err) {
                         console.error('Error reading the file:', err);
                         return;
