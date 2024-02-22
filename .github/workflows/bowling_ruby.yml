@@ -21,6 +21,7 @@ jobs:
         run: bundle exec rspec
       - name: Reek
         run: bundle exec reek ./** -c ./.reek.yml -V
+        if: ${{ !cancelled() }}
       - name: Rubocop
         run: bundle exec rubocop
         if: ${{ !cancelled() }}

@@ -35,7 +35,8 @@ describe Bowling::Game do
   context 'when a gutter game is played,' do
     it 'results in a score of zero' do
       roll_many(20, 0)
-      expect(game.score).to eq(0)
+      # fails on purpose
+      expect(game.score).to eq(1)
     end
   end
 
