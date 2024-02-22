@@ -33,12 +33,12 @@ jobs:
 
             if (isNaN(lineCoverage)) {
               core.setFailed('Invalid coverage value');
-            } else if (lineCoverage == 100) {
-              core.info('Perfect! Code voverage is 100%. This Is The Way!');
+            } else if (lineCoverage === 100) {
+              core.info('Perfect! Code coverage is 100%. This Is The Way!');
             } else if (lineCoverage < 90) {
-              core.setFailed(`Code voverage ${lineCoverage}% (less than 90%) is not acceptable`);
-            } else
-              core.info(`Code voverage ${lineCoverage}% (more than 90%) is satisfactory, but not perfect.`);
+              core.setFailed(`Code coverage ${lineCoverage}% (less than 90%) is not acceptable`);
+            } else {
+              core.info(`Code coverage ${lineCoverage}% (more than 90%) is satisfactory, but not perfect.`);
             }        
         if: ${{ !cancelled() }}        
       - name: Reek
