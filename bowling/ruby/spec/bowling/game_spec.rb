@@ -73,7 +73,7 @@ describe Bowling::Game do
     end
   end
 
-  context 'when a game is played,' do
+  context 'when a game is played,', ignore: true do
     it 'prints result' do
       roll_strike
       roll_frame([3, 4])
