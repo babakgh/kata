@@ -27,7 +27,6 @@ jobs:
         env:
           COVERAGE: ${{steps.rspec.outputs.coverage}}
         with:
-          debug: true
           script: |
             const lineCoverage = parseFloat(process.env.COVERAGE);
 
