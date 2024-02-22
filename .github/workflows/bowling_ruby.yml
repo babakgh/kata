@@ -18,7 +18,28 @@ jobs:
       - name: Bundle
         run: bundle install
       - name: RSpec
-        run: bundle exec rspec
+        id: rspec
+        run: | 
+          bundle exec rspec
+          echo "coverage=$(jq '.result.line' ./coverage/.last_run.json)" >> "$GITHUB_OUTPUT"
+      - name: Coverage
+        uses: actions/github-script@v7
+        env:
+          COVERAGE: ${{steps.rspec.outputs.coverage}}
+        with:
+          script: |
+            const lineCoverage = parseFloat(process.env.COVERAGE);
+
+            if (isNaN(lineCoverage)) {
+              core.setFailed('Invalid coverage value');
+            } else if (lineCoverage === 100) {
+              core.info('Perfect! Code coverage is 100%. This Is The Way!');
+            } else if (lineCoverage < 90) {
+              core.setFailed(`Code coverage ${lineCoverage}% (less than 90%) is not acceptable`);
+            } else {
+              core.info(`Code coverage ${lineCoverage}% (more than 90%) is satisfactory, but not perfect.`);
+            }        
+        if: ${{ !cancelled() }}        
       - name: Reek
         run: bundle exec reek ./** -c ./.reek.yml -V
         if: ${{ !cancelled() }}
