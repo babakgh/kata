@@ -23,10 +23,10 @@ jobs:
           echo "coverage=$(jq '.result.line' ./coverage/.last_run.json)" >> "$GITHUB_OUTPUT"
       - name: Coverage
         uses: actions/github-script@v7
-          with:
-            script: |
-              console.log(context)
-              console.log(steps)
+        with:
+          script: |
+            console.log(context)
+            console.log(steps)
         if: ${{ !cancelled() }}        
       - name: Reek
         run: bundle exec reek ./** -c ./.reek.yml -V
