@@ -1,7 +1,10 @@
-name: Test
-on: [push, pull_request]
+name: Verify Bowling(ruby) 
+on:
+  push:
+    paths:
+    - 'bowling/ruby/**'
 jobs:
-  rspec:
+  verify:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -12,6 +15,13 @@ jobs:
         with:
           ruby-version: '3.3'
           bundler-cache: true
-      - run: bundle exec rspec
-      
-    
+      - name: Bundle
+        run: bundle install
+      - name: RSpec
+        run: bundle exec rspec
+      - name: Reek
+        run: bundle exec reek ./** -c ./.reek.yml -V
+        if: ${{ !cancelled() }}
+      - name: Rubocop
+        run: bundle exec rubocop
+        if: ${{ !cancelled() }}
