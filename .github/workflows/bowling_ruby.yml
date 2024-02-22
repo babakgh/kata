@@ -1,4 +1,4 @@
-name: Clean Code - Bowling(ruby) 
+name: Verify Bowling(ruby) 
 on:
   push:
     paths:
