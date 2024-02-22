@@ -1,11 +1,5 @@
 name: Test
-on: 
-  push:
-    paths:
-      - './bowling/ruby/**'
-  pull_request:
-    paths:
-      - './bowling/ruby/**'  
+on: [push, pull_request]
 jobs:
   rspec:
     runs-on: ubuntu-latest
