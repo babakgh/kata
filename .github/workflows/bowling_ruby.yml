@@ -3,6 +3,7 @@ on:
   push:
     paths:
     - 'bowling/ruby/**'
+    branches: [main]
   pull_request:
     paths:
     - 'bowling/ruby/**'
