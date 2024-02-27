@@ -9,19 +9,14 @@ import (
 	"github.com/babakgh/kata/bank_account/core"
 )
 
-func TestAccountWithdraw(t *testing.T) {
+func TestRequestWithdraw(t *testing.T) {
 	// Setup
 	log.Printf("when withdrawn, it updates the account's balance")
 	// Arrange
-	date, _ := time.Parse("%Y-%m-%d", "2024-01-01")
-
 	a := core.Account{}
 
-	ad := core.NewAccountDeposit(&a)
-	ad.Deposit(date, 1000)
-
-	aw := core.NewAccountWithdraw(&a)
-	aw.Withdraw(date, 1000)
+	core.RequestDeposit{time.Now(), 1000}.Deposit(&a)
+	core.RequestWithdraw{time.Now(), 1000}.Withdraw(&a)
 
 	want := int64(0)
 	// Act
@@ -32,19 +27,18 @@ func TestAccountWithdraw(t *testing.T) {
 	}
 }
 
-func TestAccountInvalidWithdraw(t *testing.T) {
+func TestInvalidRequestWithdraw(t *testing.T) {
 	// Setup
 	log.Printf("when withdrawn more than balance, it raise an error")
 	// Arrange
 	date, _ := time.Parse("%Y-%m-%d", "2024-01-01")
 	a := core.Account{}
 
-	aw := core.NewAccountWithdraw(&a)
-	aw.Withdraw(date, 1000)
+	rw := core.RequestWithdraw{date, 1000}
 
 	want := errors.New("IsNotAllowed")
 	// Act
-	got := aw.Withdraw(date, 1000)
+	got := rw.Withdraw(&a)
 	// Assert
 	if got.Error() != want.Error() {
 		t.Errorf("incorrect, got: %v, want %v", got, want)

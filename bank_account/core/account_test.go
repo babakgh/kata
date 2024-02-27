@@ -2,6 +2,7 @@ package core_test
 
 import (
 	"log"
+	"reflect"
 	"testing"
 	"time"
 
@@ -25,20 +26,24 @@ func TestTransact(t *testing.T) {
 	}
 }
 
-// func TestReportStatement(t *testing.T) {
-// 	// Setup
-// 	log.Printf("When transactions applied, it reports the statement.")
-// 	// Arrange
-// 	a := core.Account{}
-// 	date, _ := time.Parse("%Y-%m-%d", "2024-01-01")
-// 	a.Deposit(date, 1000)
-// 	a.Deposit(date, 1000)
-// 	a.Withdraw(date, 1000)
-// 	want := []core.Transaction{{date, 1000}, {date, 1000}, {date, -1000}}
-// 	// Act
-// 	got := a.ReportStatement()
-// 	// Assert
-// 	if !reflect.DeepEqual(got, want) {
-// 		t.Errorf("incorrect, got: %v, want %v", got, want)
-// 	}
-// }
+func TestHistory(t *testing.T) {
+	// Setup
+	log.Printf("When transactions are applied, it keeps history.")
+	// Arrange
+	date, _ := time.Parse(time.DateOnly, "2024-01-01")
+	a := core.Account{}
+
+	core.RequestDeposit{date, 1000}.Deposit(&a)
+	core.RequestDeposit{date, 2000}.Deposit(&a)
+	core.RequestWithdraw{date, 800}.Withdraw(&a)
+	want := []core.Transaction{
+		core.NewTransaction(date, 1000, 1000),
+		core.NewTransaction(date, 2000, 3000),
+		core.NewTransaction(date, -800, 2200)}
+	// Act
+	got := a.History()
+	// Assert
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("incorrect, got: %v, want %v", got, want)
+	}
+}

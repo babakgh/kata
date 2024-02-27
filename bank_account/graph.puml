@@ -1,0 +1,38 @@
+@startuml
+package core{
+annotation core {
+
+
++NewTransaction(date Time, amount int64, balance int64): Transaction
+}
+class Account {
+-balance: int64
+-transactions: []Transaction
++CheckBalance(): int64
++Transact1(date Time, amount int64): error
+}
+class RequestDeposit {
++Date: Time
++Amount: int64
++Deposit(to *Account): error
+}
+class RequestTransfer {
++Date: Time
++Amount: int64
++Transfer(from *Account, to *Account): error
+}
+class RequestWithdraw {
++Date: Time
++Amount: int64
++Withdraw(from *Account): error
+}
+class Transaction {
++Date: Time
++Amount: int64
++Balance: int64
+
+}
+}
+
+
+@enduml

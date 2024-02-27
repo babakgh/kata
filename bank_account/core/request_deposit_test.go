@@ -8,19 +8,16 @@ import (
 	"github.com/babakgh/kata/bank_account/core"
 )
 
-func TestAccountDeposit(t *testing.T) {
+func TestRequestDeposit(t *testing.T) {
 	// Setup
 	log.Printf("when deposited, it updates the account's balance")
 	// Arrange
-	date, _ := time.Parse("%Y-%m-%d", "2024-01-01")
-
 	a := core.Account{}
 
-	ad := core.NewAccountDeposit(&a)
-	ad.Deposit(date, 1000)
-	ad.Deposit(date, 1000)
+	core.RequestDeposit{time.Now(), 1000}.Deposit(&a)
+	core.RequestDeposit{time.Now(), 2000}.Deposit(&a)
 
-	want := int64(2000)
+	want := int64(3000)
 	// Act
 	got := a.CheckBalance()
 	// Assert

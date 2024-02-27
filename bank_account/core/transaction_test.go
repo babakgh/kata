@@ -12,11 +12,13 @@ func TestTransaction(t *testing.T) {
 	// Setup
 	log.Printf("On a new transaction, it has date, amount and balance")
 	// Arrange
-	date, _ := time.Parse("%Y-%m-%d", "2024-01-01")
+	date, _ := time.Parse(time.DateOnly, "2024-01-01")
 	amount := int64(1000)
 	balance := int64(2000)
 
-	want := core.Transaction{date, amount, balance}
+	want := core.NewTransaction(date, amount, balance)
+	log.Printf("%v", want)
+	// want := core.Transaction{date, amount, balance}
 	// Act
 	got := core.NewTransaction(date, amount, balance)
 	// Assert
