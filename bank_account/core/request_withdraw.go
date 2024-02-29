@@ -1,14 +1,13 @@
 package core
 
-import (
-	"time"
-)
+import "time"
 
 type RequestWithdraw struct {
-	Date   time.Time
-	Amount int64
+	Date           time.Time
+	Amount         int64
+	FromTransacter Transacter
 }
 
-func (rw RequestWithdraw) Withdraw(from *Account) error {
-	return from.Transact(rw.Date, -1*rw.Amount)
+func (rw RequestWithdraw) Withdraw() error {
+	return rw.FromTransacter.Transact(rw.Date, -1*rw.Amount)
 }

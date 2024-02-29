@@ -14,8 +14,8 @@ func TestRequestDeposit(t *testing.T) {
 	// Arrange
 	a := core.Account{}
 
-	core.RequestDeposit{time.Now(), 1000}.Deposit(&a)
-	core.RequestDeposit{time.Now(), 2000}.Deposit(&a)
+	core.RequestDeposit{time.Now(), 1000, &a}.Deposit()
+	core.RequestDeposit{time.Now(), 2000, &a}.Deposit()
 
 	want := int64(3000)
 	// Act

@@ -1,7 +1,6 @@
 package core_test
 
 import (
-	"errors"
 	"log"
 	"testing"
 	"time"
@@ -15,8 +14,8 @@ func TestRequestWithdraw(t *testing.T) {
 	// Arrange
 	a := core.Account{}
 
-	core.RequestDeposit{time.Now(), 1000}.Deposit(&a)
-	core.RequestWithdraw{time.Now(), 1000}.Withdraw(&a)
+	core.RequestDeposit{time.Now(), 1000, &a}.Deposit()
+	core.RequestWithdraw{time.Now(), 1000, &a}.Withdraw()
 
 	want := int64(0)
 	// Act
@@ -31,14 +30,13 @@ func TestInvalidRequestWithdraw(t *testing.T) {
 	// Setup
 	log.Printf("when withdrawn more than balance, it raise an error")
 	// Arrange
-	date, _ := time.Parse("%Y-%m-%d", "2024-01-01")
 	a := core.Account{}
 
-	rw := core.RequestWithdraw{date, 1000}
+	rw := core.RequestWithdraw{time.Now(), 1000, &a}
 
-	want := errors.New("IsNotAllowed")
+	want := core.ErrIsNotAllowed
 	// Act
-	got := rw.Withdraw(&a)
+	got := rw.Withdraw()
 	// Assert
 	if got.Error() != want.Error() {
 		t.Errorf("incorrect, got: %v, want %v", got, want)

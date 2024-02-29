@@ -2,37 +2,45 @@
 package core{
 annotation core {
 
-
+-var ErrIsNotAllowed: 
 +NewTransaction(date Time, amount int64, balance int64): Transaction
+}
+interface Transacter{
++Transact(date Time, amount int64): error
 }
 class Account {
 -balance: int64
 -transactions: []Transaction
++History(): []Transaction
 +CheckBalance(): int64
-+Transact1(date Time, amount int64): error
++Transact(date Time, amount int64): error
+}
+class Operation {
++Date: Time
++Amount: int64
+
 }
 class RequestDeposit {
-+Date: Time
-+Amount: int64
-+Deposit(to *Account): error
++: Operation
++Deposit(to Transacter): error
 }
 class RequestTransfer {
-+Date: Time
-+Amount: int64
-+Transfer(from *Account, to *Account): error
++: Operation
++Transfer(from Transacter, to Transacter): error
 }
 class RequestWithdraw {
-+Date: Time
-+Amount: int64
-+Withdraw(from *Account): error
++: Operation
++Withdraw(from Transacter): error
 }
 class Transaction {
-+Date: Time
-+Amount: int64
-+Balance: int64
+-date: Time
+-amount: int64
+-balance: int64
 
 }
 }
-
-
+"RequestDeposit" --> "Operation"
+"RequestTransfer" --> "Operation"
+"RequestWithdraw" --> "Operation"
+"Account" --|> "Transacter"
 @enduml

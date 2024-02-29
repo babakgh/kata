@@ -14,10 +14,15 @@ func TestRequestTransfer(t *testing.T) {
 	log.Printf("when withdrawn, it updates the account's balance")
 	// Arrange
 	from := core.Account{}
-	core.RequestDeposit{time.Now(), 1000}.Deposit(&from)
+	core.RequestDeposit{time.Now(), 1000, &from}.Deposit()
 
 	to := core.Account{}
-	core.RequestTransfer{time.Now(), 300}.Transfer(&from, &to)
+
+	t.Logf("%v %v", from, to)
+
+	if err := (core.RequestTransfer{time.Now(), 300, &from, &to}.Transfer()); err != nil {
+		t.Errorf("It's a bug! Fix it: %v", err)
+	}
 
 	want := [2]int64{700, 300}
 	// Act
@@ -36,11 +41,11 @@ func TestInvalidRequestTransfer(t *testing.T) {
 
 	from := core.Account{}
 	to := core.Account{}
-	rt := core.RequestTransfer{date, 300}
+	rt := core.RequestTransfer{date, 300, &from, &to}
 
 	want := errors.New("IsNotAllowed")
 	// Act
-	got := rt.Transfer(&from, &to)
+	got := rt.Transfer()
 	// Assert
 	if got.Error() != want.Error() {
 		t.Errorf("incorrect, got: %v, want %v", got, want)

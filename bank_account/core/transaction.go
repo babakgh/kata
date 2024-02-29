@@ -5,16 +5,11 @@ import (
 )
 
 type Transaction struct {
-	date            time.Time
-	amount          int64
-	balance         int64
-	transactionType string
+	date    time.Time
+	amount  int64
+	balance int64
 }
 
 func NewTransaction(date time.Time, amount int64, balance int64) Transaction {
-	t := new(Transaction)
-	t.date = date
-	t.amount = amount
-	t.balance = balance
-	return *t
+	return Transaction{date: date, amount: amount, balance: balance}
 }

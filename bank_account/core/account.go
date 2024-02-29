@@ -2,6 +2,7 @@ package core
 
 import (
 	"errors"
+	"log"
 	"time"
 )
 
@@ -9,6 +10,8 @@ type Account struct {
 	balance      int64
 	transactions []Transaction
 }
+
+var ErrIsNotAllowed = errors.New("IsNotAllowed")
 
 func (a *Account) History() []Transaction {
 	return a.transactions
@@ -21,7 +24,8 @@ func (a *Account) CheckBalance() int64 {
 func (a *Account) Transact(date time.Time, amount int64) error {
 	// This is a business rule
 	if a.balance+amount < 0 {
-		return errors.New("IsNotAllowed")
+		log.Printf("%v, %v, %v", a.balance+amount, a.balance, amount)
+		return ErrIsNotAllowed
 	}
 
 	a.balance += amount

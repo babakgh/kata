@@ -33,9 +33,9 @@ func TestHistory(t *testing.T) {
 	date, _ := time.Parse(time.DateOnly, "2024-01-01")
 	a := core.Account{}
 
-	core.RequestDeposit{date, 1000}.Deposit(&a)
-	core.RequestDeposit{date, 2000}.Deposit(&a)
-	core.RequestWithdraw{date, 800}.Withdraw(&a)
+	core.RequestDeposit{date, 1000, &a}.Deposit()
+	core.RequestDeposit{date, 2000, &a}.Deposit()
+	core.RequestWithdraw{date, 800, &a}.Withdraw()
 	want := []core.Transaction{
 		core.NewTransaction(date, 1000, 1000),
 		core.NewTransaction(date, 2000, 3000),
