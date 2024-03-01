@@ -1,0 +1,47 @@
+@startuml
+package app{
+interface Shape{
++Draw()
+}
+interface ShapeFactory{
++Make(shapeName string): Shape
++GetShapeNames(): []string
+}
+}
+package core{
+annotation core {
+-const SquareShape: STRING
+-const CircleShape: ShapeType
+-var ErrShapIsNotFound: 
+
+}
+class Circle {
++: Point
++Radius: int
++Draw()
+}
+class Point {
++X: int
++Y: int
+
+}
+class ShapeFactoryImp {
+
++Make(shapeName string): Shape, error
++GetShapeNames(): []string
+}
+class ShapeType {
+
+
+}
+class Square {
++: Point
++Side: int
++Draw()
+}
+}
+"Circle" --> "Point"
+"Square" --> "Point"
+"Circle" --|> "Shape"
+"Square" --|> "Shape"
+@enduml
