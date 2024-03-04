@@ -1,4 +1,4 @@
-package app
+package core
 
 type Shape interface {
 	Draw()
