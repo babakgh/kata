@@ -29,15 +29,13 @@ const (
 	Square                = "square"
 )
 
-var Shapes = &map[core.ShapeType]core.Shape{
-	Circle: CircleMock{},
-	Square: SquareMock{},
-}
-
 type ShapeRepositoryMock struct{}
 
 func (repo *ShapeRepositoryMock) Shapes() map[core.ShapeType]core.Shape {
-	return *Shapes
+	return map[core.ShapeType]core.Shape{
+		Circle: CircleMock{},
+		Square: SquareMock{},
+	}
 }
 
 func TestAllShapeNamesShouldBeShape(t *testing.T) {
