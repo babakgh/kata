@@ -3,11 +3,12 @@ package core_test
 import (
 	"fmt"
 	"log"
-	"reflect"
+	// "reflect"
 	"testing"
 
 	"github.com/babakgh/kata/design_patterns/abstract_factory/go/pkg/core"
 	"github.com/iancoleman/strcase"
+	"github.com/stretchr/testify/assert"
 )
 
 type ShapeFactoryMock struct {
@@ -52,12 +53,7 @@ func TestAllShapeNamesShouldBeShape(t *testing.T) {
 				t.Errorf("incorrect, got: %v, want nil", err)
 				return
 			}
-			want := reflect.TypeFor[core.Shape]()
-			// Assert
-			got := reflect.TypeOf(shape)
-			if !got.Implements(want) {
-				t.Errorf("incorrect, got: %v, want %v", got, want)
-			}
+			assert.Implements(t, (*core.Shape)(nil), shape)
 		})
 	}
 }
@@ -71,7 +67,5 @@ func TestMakeInvalidShape(t *testing.T) {
 	// Act
 	_, got := factory.MakeShape("blah")
 	// Assert
-	if got != want {
-		t.Errorf("incorrect, got: %v, want %v", got, want)
-	}
+	assert.Equal(t, want, got)
 }

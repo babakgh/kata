@@ -3,12 +3,12 @@ package main_test
 import (
 	"fmt"
 	"log"
-	"reflect"
 	"testing"
 
 	"github.com/babakgh/kata/design_patterns/abstract_factory/go/pkg/core"
 	"github.com/babakgh/kata/design_patterns/abstract_factory/go/pkg/plugins/v1"
 	"github.com/iancoleman/strcase"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAllShapeNamesShouldBeShape(t *testing.T) {
@@ -25,12 +25,8 @@ func TestAllShapeNamesShouldBeShape(t *testing.T) {
 				t.Errorf("incorrect, got: %v, want nil", err)
 				return
 			}
-			want := reflect.TypeFor[core.Shape]()
 			// Assert
-			got := reflect.TypeOf(shape)
-			if !got.Implements(want) {
-				t.Errorf("incorrect, got: %v, want %v", got, want)
-			}
+			assert.Implements(t, (*core.Shape)(nil), shape)
 		})
 	}
 }
