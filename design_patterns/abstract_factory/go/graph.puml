@@ -1,0 +1,142 @@
+@startuml
+package cmd{
+annotation cmd {
+
+
+-main()
+-loadPlugin(version string): Symbol
+-loadFactory(): ShapeFactory
+}
+}
+package pkg/app{
+annotation pkg/app {
+
+-var App: app
+
+}
+class app {
+
++Start(factory ShapeFactory)
+}
+}
+package pkg/core{
+annotation pkg/core {
+
+-var ErrShapeIsNotFound: 
+
+}
+interface Shape{
++Draw()
+}
+interface ShapeFactory{
++MakeShape(shapeType ShapeType): Shape, error
++GetShapeTypes(): []ShapeType
+}
+interface ShapeRepository{
++Shapes(): map[ShapeType]Shape
+}
+class BaseShapeFactory {
++Repo: ShapeRepository
++MakeShape(shapeType ShapeType): Shape, error
++GetShapeTypes(): []ShapeType
+}
+class Point {
++X: int
++Y: int
+
+}
+class ShapeType {
+
+
+}
+}
+package pkg/plugins/v1/factory{
+annotation pkg/plugins/v1/factory {
+-const Circle: ShapeType
+-const Square: STRING
+-const Haxagon: STRING
+
+
+}
+class ShapeFactoryV1 {
++: *BaseShapeFactory
+
+}
+class ShapeRepositoryV1 {
+
++Shapes(): map[ShapeType]Shape
+}
+}
+package pkg/plugins/v1/shapes{
+class Circle {
++Origin: Point
++Radius: int
++Draw()
+}
+class Hexagon {
++Origin: Point
++Side: int
++Draw()
+}
+class Square {
++Origin: Point
++Side: int
++Draw()
+}
+}
+package pkg/plugins/v1{
+annotation pkg/plugins/v1 {
+
+-var Factory: ShapeFactoryV1
+
+}
+}
+package pkg/plugins/v2/factory{
+annotation pkg/plugins/v2/factory {
+-const Circle: ShapeType
+-const EquilateralTriangle: STRING
+
+
+}
+class ShapeFactoryV2 {
++: *BaseShapeFactory
+
+}
+class ShapeRepositoryV2 {
+
++Shapes(): map[ShapeType]Shape
+}
+}
+package pkg/plugins/v2/shapes{
+class Circle {
++Points: []Point
++Draw()
+}
+class EquilateralTriangle {
++Origin: Point
++Side: int
++Draw()
+}
+}
+package pkg/plugins/v2{
+annotation pkg/plugins/v2 {
+
+-var Factory: ShapeFactoryV2
+
+}
+}
+"ShapeFactoryV1" --> "BaseShapeFactory"
+"ShapeFactoryV2" --> "BaseShapeFactory"
+"Circle" --> "Point"
+"Hexagon" --> "Point"
+"Square" --> "Point"
+"EquilateralTriangle" --> "Point"
+"BaseShapeFactory" --|> "ShapeFactory"
+"ShapeRepositoryV1" --|> "ShapeRepository"
+"Circle" --|> "Shape"
+"Hexagon" --|> "Shape"
+"Square" --|> "Shape"
+"ShapeRepositoryV2" --|> "ShapeRepository"
+"Circle" --|> "Shape"
+"EquilateralTriangle" --|> "Shape"
+@enduml
