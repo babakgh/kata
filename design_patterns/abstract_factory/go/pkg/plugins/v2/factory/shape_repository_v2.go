@@ -10,11 +10,13 @@ const (
 	EquilateralTriangle                = "equilateral_triangle"
 )
 
+var allShapes = map[core.ShapeType]core.Shape{
+	Circle:              shapes.Circle{},
+	EquilateralTriangle: shapes.EquilateralTriangle{},
+}
+
 type ShapeRepositoryV2 struct{}
 
 func (repo *ShapeRepositoryV2) Shapes() map[core.ShapeType]core.Shape {
-	return map[core.ShapeType]core.Shape{
-		Circle:              shapes.Circle{},
-		EquilateralTriangle: shapes.EquilateralTriangle{},
-	}
+	return allShapes
 }

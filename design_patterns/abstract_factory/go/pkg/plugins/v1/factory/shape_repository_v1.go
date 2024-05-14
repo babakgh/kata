@@ -11,12 +11,14 @@ const (
 	Haxagon                = "haxagon"
 )
 
+var allShapes = map[core.ShapeType]core.Shape{
+	Circle:  shapes.Circle{},
+	Square:  shapes.Square{},
+	Haxagon: shapes.Hexagon{},
+}
+
 type ShapeRepositoryV1 struct{}
 
 func (repo *ShapeRepositoryV1) Shapes() map[core.ShapeType]core.Shape {
-	return map[core.ShapeType]core.Shape{
-		Circle:  shapes.Circle{},
-		Square:  shapes.Square{},
-		Haxagon: shapes.Hexagon{},
-	}
+	return allShapes
 }
