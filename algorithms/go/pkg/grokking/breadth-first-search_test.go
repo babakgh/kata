@@ -1,8 +1,6 @@
 package grokking_test
 
 import (
-	"log"
-	"reflect"
 	"testing"
 
 	. "github.com/babakgh/kata/algorithms/go/pkg/grokking"
@@ -10,7 +8,7 @@ import (
 
 func TestBreadthFirstSearch(t *testing.T) {
 	// Setup
-	log.Printf("When search on shortest path, it finds it")
+	t.Logf("When search on shortest path, it finds it")
 	// Arrange
 	graph := map[string][]string{}
 
@@ -34,11 +32,4 @@ func TestBreadthFirstSearch(t *testing.T) {
 	assertDeepEqual(t, BFS(graph, "you", "peggy"), []string{"you", "alice", "peggy"})
 	assertDeepEqual(t, BFS(graph, "you", "anuj"), []string{"you", "bob", "anuj"})
 	assertDeepEqual(t, BFS(graph, "you", "ella"), []string{"you", "claire", "jonny", "ella"})
-}
-
-func assertDeepEqual[T any](t *testing.T, got, want []T) {
-	t.Helper()
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %v want %v", got, want)
-	}
 }
