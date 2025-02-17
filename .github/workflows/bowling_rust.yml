@@ -45,16 +45,20 @@ jobs:
           LLVM_PROFILE_FILE="target/coverage/profraw/%m.profraw" \
           cargo test
 
-      - name: Generate Coverage Report (JSON & HTML)
+      - name: Generate Coverage Report (HTML)
         run: |
-          grcov . -s . --binary-path ./target/debug/ \
-          -t json --branch --ignore-not-existing -o target/coverage/coverage.json
           grcov . -s . --binary-path ./target/debug/ \
           -t html --branch --ignore-not-existing -o target/coverage/html
 
       - name: Enforce Minimum Code Coverage
         run: |
-          LINE_COVERAGE=$(jq '.coverage.line.pct' target/coverage/coverage.json | awk '{print $1 * 100}')
+          COVERAGE_JSON="target/coverage/html/coverage.json"
+          if [ ! -f "$COVERAGE_JSON" ]; then
+            echo "Coverage file not found!"
+            exit 1
+          fi
+
+          LINE_COVERAGE=$(jq -r '.message' "$COVERAGE_JSON" | sed 's/%//')
 
           echo "Line coverage: ${LINE_COVERAGE}%"
 
