@@ -1,0 +1,82 @@
+name: Verify Bowling (Rust)
+
+on:
+  push:
+    paths:
+      - "bowling/rust/**"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./bowling/rust
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview # Required for code coverage
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: cargo-${{ runner.os }}-
+
+      - name: Run Tests
+        id: test
+        run: cargo test --all --verbose
+
+      - name: Install grcov
+        run: cargo install grcov
+
+      - name: Run Tests with Coverage
+        run: |
+          mkdir -p target/coverage/profraw
+          CARGO_INCREMENTAL=0 RUSTFLAGS="-Cinstrument-coverage" \
+          LLVM_PROFILE_FILE="target/coverage/profraw/%m.profraw" \
+          cargo test
+
+      - name: Generate Coverage Report
+        run: |
+          grcov . -s . --binary-path ./target/debug/ \
+          -t lcov --branch --ignore-not-existing -o lcov.info
+
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: lcov.info
+          fail_ci_if_error: true
+
+      - name: Enforce Minimum Code Coverage
+        run: |
+          LINE_COVERAGE=$(grcov . -s . --binary-path ./target/debug/ \
+          -t json --branch --ignore-not-existing | jq '.coverage.line.pct' | awk '{print $1 * 100}')
+
+          echo "Line coverage: ${LINE_COVERAGE}%"
+
+          if (( $(echo "$LINE_COVERAGE < 90" | bc -l) )); then
+            echo "Code coverage is less than 90%, failing the build"
+            exit 1
+          elif (( $(echo "$LINE_COVERAGE == 100" | bc -l) )); then
+            echo "Perfect! Code coverage is 100%. This Is The Way!"
+          else
+            echo "Code coverage ${LINE_COVERAGE}% (more than 90%) is satisfactory, but not perfect."
+          fi
+
+      - name: Run Clippy (Linter)
+        run: cargo clippy -- -D warnings
+        if: ${{ !cancelled() }}
+
+      - name: Check Formatting (rustfmt)
+        run: cargo fmt -- --check
+        if: ${{ !cancelled() }}

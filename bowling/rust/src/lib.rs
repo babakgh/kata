@@ -3,6 +3,12 @@ pub struct Game {
     rolls: Vec<u32>,
 }
 
+impl Default for Game {
+    fn default() -> Self {
+        Game::new()
+    }
+}
+
 impl Game {
     pub fn new() -> Self {
         Game { rolls: Vec::new() }
