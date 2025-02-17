@@ -36,7 +36,7 @@ jobs:
         run: cargo test --all --verbose
 
       - name: Install grcov
-        run: cargo install grcov
+        run: cargo install grcov --force # it is very expensive, cargo deb?
 
       - name: Run Tests with Coverage
         run: |
