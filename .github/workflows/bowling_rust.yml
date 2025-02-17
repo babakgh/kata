@@ -19,7 +19,7 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          components: llvm-tools-preview # Required for code coverage
+          components: llvm-tools-preview # Required for grcov
 
       - name: Cache dependencies
         uses: actions/cache@v3
@@ -33,7 +33,6 @@ jobs:
           restore-keys: cargo-${{ runner.os }}-
 
       - name: Run Tests
-        id: test
         run: cargo test --all --verbose
 
       - name: Install grcov
@@ -46,21 +45,16 @@ jobs:
           LLVM_PROFILE_FILE="target/coverage/profraw/%m.profraw" \
           cargo test
 
-      - name: Generate Coverage Report
+      - name: Generate Coverage Report (JSON & HTML)
         run: |
           grcov . -s . --binary-path ./target/debug/ \
-          -t lcov --branch --ignore-not-existing -o lcov.info
-
-      - name: Upload Coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          files: lcov.info
-          fail_ci_if_error: true
+          -t json --branch --ignore-not-existing -o target/coverage/coverage.json
+          grcov . -s . --binary-path ./target/debug/ \
+          -t html --branch --ignore-not-existing -o target/coverage/html
 
       - name: Enforce Minimum Code Coverage
         run: |
-          LINE_COVERAGE=$(grcov . -s . --binary-path ./target/debug/ \
-          -t json --branch --ignore-not-existing | jq '.coverage.line.pct' | awk '{print $1 * 100}')
+          LINE_COVERAGE=$(jq '.coverage.line.pct' target/coverage/coverage.json | awk '{print $1 * 100}')
 
           echo "Line coverage: ${LINE_COVERAGE}%"
 
@@ -72,6 +66,9 @@ jobs:
           else
             echo "Code coverage ${LINE_COVERAGE}% (more than 90%) is satisfactory, but not perfect."
           fi
+
+      - name: Display Coverage Report Path
+        run: echo "Coverage report available at target/coverage/html/index.html"
 
       - name: Run Clippy (Linter)
         run: cargo clippy -- -D warnings
