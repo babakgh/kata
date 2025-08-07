@@ -1,7 +1,7 @@
 mod core;
 
 use core::Turnstile;
-use core::table_impl::{TurnstileFSM, DynamicTurnstileFSM, Event};
+use core::table_impl::{TurnstileFSM, Event};
 
 fn main() {
     println!("=== Turnstile FSM Demo ===");
@@ -29,10 +29,10 @@ fn main() {
     generic_fsm.handle_event(Event::Pass);
     println!("State after pass (locked): {:?}", generic_fsm.current_state());
     
-    // Demonstrate backward compatibility with trait objects (dynamic dispatch)
+    // Demonstrate trait objects with explicit generic syntax
     println!("\n--- Dynamic FSM (Trait Objects) ---");
-    let dynamic_turnstile = Box::new(Turnstile::new("Software Gate".to_string()));
-    let mut dynamic_fsm = DynamicTurnstileFSM::new(dynamic_turnstile);
+    let dynamic_turnstile = Box::new(Turnstile::new("Software Gate".to_string())) as Box<dyn core::TurnstileMechanism>;
+    let mut dynamic_fsm = TurnstileFSM::new(dynamic_turnstile);
     
     println!("Initial state: {:?}", dynamic_fsm.current_state());
     
@@ -44,12 +44,12 @@ fn main() {
     dynamic_fsm.handle_event(Event::Pass);
     println!("State after pass: {:?}", dynamic_fsm.current_state());
     
-    // Demonstrate collection of different turnstile types using trait objects
+    // Demonstrate collection of different turnstile types using explicit generic syntax
     println!("\n--- Mixed Collection (Dynamic Dispatch) ---");
-    let turnstiles: Vec<DynamicTurnstileFSM> = vec![
-        DynamicTurnstileFSM::new(Box::new(Turnstile::new("Gate 1".to_string()))),
-        DynamicTurnstileFSM::new(Box::new(Turnstile::new("Gate 2".to_string()))),
-        DynamicTurnstileFSM::new(Box::new(Turnstile::new("Gate 3".to_string()))),
+    let turnstiles: Vec<TurnstileFSM<Box<dyn core::TurnstileMechanism>>> = vec![
+        TurnstileFSM::new(Box::new(Turnstile::new("Gate 1".to_string())) as Box<dyn core::TurnstileMechanism>),
+        TurnstileFSM::new(Box::new(Turnstile::new("Gate 2".to_string())) as Box<dyn core::TurnstileMechanism>),
+        TurnstileFSM::new(Box::new(Turnstile::new("Gate 3".to_string())) as Box<dyn core::TurnstileMechanism>),
     ];
     
     println!("Processing {} turnstiles in collection:", turnstiles.len());

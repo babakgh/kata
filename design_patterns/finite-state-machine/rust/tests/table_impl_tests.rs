@@ -1,4 +1,4 @@
-use finite_state_machine::core::table_impl::{Event, State, TurnstileFSM, DynamicTurnstileFSM};
+use finite_state_machine::core::table_impl::{Event, State, TurnstileFSM};
 use finite_state_machine::core::TurnstileMechanism;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -127,11 +127,11 @@ mod turnstile_fsm_integration_tests {
         assert!(calls.borrow().alarmed_called);
     }
 
-    // Tests for Dynamic FSM (Trait Objects) - Backward Compatibility
+    // Tests for Dynamic FSM (Trait Objects) - Explicit Generic Usage
     #[test]
     fn test_dynamic_locked_state_with_coin_should_unlock() {
         let (turnstile, calls) = FakeTurnstile::new();
-        let mut fsm = DynamicTurnstileFSM::new(Box::new(turnstile));
+        let mut fsm = TurnstileFSM::new(Box::new(turnstile) as Box<dyn TurnstileMechanism>);
 
         assert_eq!(fsm.current_state(), State::Locked);
 
@@ -149,7 +149,7 @@ mod turnstile_fsm_integration_tests {
     #[test]
     fn test_dynamic_complete_workflow() {
         let (turnstile, calls) = FakeTurnstile::new();
-        let mut fsm = DynamicTurnstileFSM::new(Box::new(turnstile));
+        let mut fsm = TurnstileFSM::new(Box::new(turnstile) as Box<dyn TurnstileMechanism>);
 
         // Initial state should be locked
         assert_eq!(fsm.current_state(), State::Locked);
@@ -169,9 +169,9 @@ mod turnstile_fsm_integration_tests {
     #[test]
     fn test_mixed_collection_with_dynamic_dispatch() {
         // Test that we can still use collections of different turnstile types
-        let turnstiles: Vec<DynamicTurnstileFSM> = vec![
-            DynamicTurnstileFSM::new(Box::new(FakeTurnstile::new().0)),
-            DynamicTurnstileFSM::new(Box::new(FakeTurnstile::new().0)),
+        let turnstiles: Vec<TurnstileFSM<Box<dyn TurnstileMechanism>>> = vec![
+            TurnstileFSM::new(Box::new(FakeTurnstile::new().0) as Box<dyn TurnstileMechanism>),
+            TurnstileFSM::new(Box::new(FakeTurnstile::new().0) as Box<dyn TurnstileMechanism>),
         ];
 
         for mut fsm in turnstiles {
@@ -191,7 +191,7 @@ mod turnstile_fsm_integration_tests {
         let mut generic_fsm = TurnstileFSM::new(generic_turnstile);
         
         // Dynamic FSM - Dynamic dispatch (vtable lookup)
-        let mut dynamic_fsm = DynamicTurnstileFSM::new(Box::new(dynamic_turnstile));
+        let mut dynamic_fsm = TurnstileFSM::new(Box::new(dynamic_turnstile) as Box<dyn TurnstileMechanism>);
 
         // Both should behave identically
         generic_fsm.handle_event(Event::Coin);

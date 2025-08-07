@@ -8,7 +8,7 @@ pub trait TurnstileMechanism {
     fn thanks(&mut self);
 }
 
-/// Implement TurnstileMechanism for Box<dyn TurnstileMechanism> to enable dynamic dispatch
+/// Implement TurnstileMechanism for Box<dyn TurnstileMechanism> to enable generic FSM with trait objects
 impl TurnstileMechanism for Box<dyn TurnstileMechanism> {
     fn lock(&mut self) {
         self.as_mut().lock();

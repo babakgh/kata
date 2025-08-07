@@ -60,9 +60,6 @@ impl<T: TurnstileMechanism> TurnstileFSM<T> {
     }
 }
 
-/// Type alias for backward compatibility with existing code that expects trait objects
-pub type DynamicTurnstileFSM = TurnstileFSM<Box<dyn TurnstileMechanism>>;
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -222,7 +219,7 @@ mod tests {
     fn test_backward_compatibility_with_trait_objects() {
         // Test that we can still use trait objects for dynamic dispatch
         let (turnstile, calls) = FakeTurnstile::new();
-        let mut fsm = DynamicTurnstileFSM::new(Box::new(turnstile));
+        let mut fsm = TurnstileFSM::new(Box::new(turnstile) as Box<dyn TurnstileMechanism>);
         
         assert_eq!(fsm.current_state(), State::Locked);
         
