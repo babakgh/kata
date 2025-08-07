@@ -8,6 +8,25 @@ pub trait TurnstileMechanism {
     fn thanks(&mut self);
 }
 
+/// Implement TurnstileMechanism for Box<dyn TurnstileMechanism> to enable dynamic dispatch
+impl TurnstileMechanism for Box<dyn TurnstileMechanism> {
+    fn lock(&mut self) {
+        self.as_mut().lock();
+    }
+
+    fn unlock(&mut self) {
+        self.as_mut().unlock();
+    }
+
+    fn alarm(&mut self) {
+        self.as_mut().alarm();
+    }
+
+    fn thanks(&mut self) {
+        self.as_mut().thanks();
+    }
+}
+
 /// Concrete implementation of a Turnstile
 pub struct Turnstile {
     pub name: String,

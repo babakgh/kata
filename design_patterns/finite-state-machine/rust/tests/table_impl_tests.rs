@@ -1,4 +1,4 @@
-use finite_state_machine::core::table_impl::{Event, State, TurnstileFSM};
+use finite_state_machine::core::table_impl::{Event, State, TurnstileFSM, DynamicTurnstileFSM};
 use finite_state_machine::core::TurnstileMechanism;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -58,10 +58,11 @@ impl TurnstileMechanism for FakeTurnstile {
 mod turnstile_fsm_integration_tests {
     use super::*;
 
+    // Tests for Generic FSM (Static Dispatch)
     #[test]
-    fn test_locked_state_with_coin_should_unlock() {
+    fn test_generic_locked_state_with_coin_should_unlock() {
         let (turnstile, calls) = FakeTurnstile::new();
-        let mut fsm = TurnstileFSM::new(Box::new(turnstile));
+        let mut fsm = TurnstileFSM::new(turnstile);
 
         assert_eq!(fsm.current_state(), State::Locked);
 
@@ -77,9 +78,9 @@ mod turnstile_fsm_integration_tests {
     }
 
     #[test]
-    fn test_locked_state_with_pass_should_remain_locked_and_alarm() {
+    fn test_generic_locked_state_with_pass_should_remain_locked_and_alarm() {
         let (turnstile, calls) = FakeTurnstile::new();
-        let mut fsm = TurnstileFSM::new(Box::new(turnstile));
+        let mut fsm = TurnstileFSM::new(turnstile);
 
         assert_eq!(fsm.current_state(), State::Locked);
 
@@ -95,55 +96,9 @@ mod turnstile_fsm_integration_tests {
     }
 
     #[test]
-    fn test_unlocked_state_with_coin_should_remain_unlocked_and_thank() {
+    fn test_generic_complete_workflow() {
         let (turnstile, calls) = FakeTurnstile::new();
-        let mut fsm = TurnstileFSM::new(Box::new(turnstile));
-
-        // First unlock the FSM
-        fsm.handle_event(Event::Coin);
-        assert_eq!(fsm.current_state(), State::Unlocked);
-
-        // Reset the call tracking
-        calls.borrow_mut().reset();
-
-        fsm.handle_event(Event::Coin);
-
-        assert_eq!(fsm.current_state(), State::Unlocked);
-
-        let calls_ref = calls.borrow();
-        assert!(calls_ref.thanks_called, "thanks should be called");
-        assert!(!calls_ref.locked_called, "lock should not be called");
-        assert!(!calls_ref.unlocked_called, "unlock should not be called");
-        assert!(!calls_ref.alarmed_called, "alarm should not be called");
-    }
-
-    #[test]
-    fn test_unlocked_state_with_pass_should_lock() {
-        let (turnstile, calls) = FakeTurnstile::new();
-        let mut fsm = TurnstileFSM::new(Box::new(turnstile));
-
-        // First unlock the FSM
-        fsm.handle_event(Event::Coin);
-        assert_eq!(fsm.current_state(), State::Unlocked);
-
-        // Reset the call tracking
-        calls.borrow_mut().reset();
-
-        fsm.handle_event(Event::Pass);
-
-        assert_eq!(fsm.current_state(), State::Locked);
-
-        let calls_ref = calls.borrow();
-        assert!(calls_ref.locked_called, "lock should be called");
-        assert!(!calls_ref.unlocked_called, "unlock should not be called");
-        assert!(!calls_ref.alarmed_called, "alarm should not be called");
-        assert!(!calls_ref.thanks_called, "thanks should not be called");
-    }
-
-    #[test]
-    fn test_complete_workflow() {
-        let (turnstile, calls) = FakeTurnstile::new();
-        let mut fsm = TurnstileFSM::new(Box::new(turnstile));
+        let mut fsm = TurnstileFSM::new(turnstile);
 
         // Initial state should be locked
         assert_eq!(fsm.current_state(), State::Locked);
@@ -170,5 +125,79 @@ mod turnstile_fsm_integration_tests {
         fsm.handle_event(Event::Pass);
         assert_eq!(fsm.current_state(), State::Locked);
         assert!(calls.borrow().alarmed_called);
+    }
+
+    // Tests for Dynamic FSM (Trait Objects) - Backward Compatibility
+    #[test]
+    fn test_dynamic_locked_state_with_coin_should_unlock() {
+        let (turnstile, calls) = FakeTurnstile::new();
+        let mut fsm = DynamicTurnstileFSM::new(Box::new(turnstile));
+
+        assert_eq!(fsm.current_state(), State::Locked);
+
+        fsm.handle_event(Event::Coin);
+
+        assert_eq!(fsm.current_state(), State::Unlocked);
+
+        let calls_ref = calls.borrow();
+        assert!(calls_ref.unlocked_called, "unlock should be called");
+        assert!(!calls_ref.locked_called, "lock should not be called");
+        assert!(!calls_ref.alarmed_called, "alarm should not be called");
+        assert!(!calls_ref.thanks_called, "thanks should not be called");
+    }
+
+    #[test]
+    fn test_dynamic_complete_workflow() {
+        let (turnstile, calls) = FakeTurnstile::new();
+        let mut fsm = DynamicTurnstileFSM::new(Box::new(turnstile));
+
+        // Initial state should be locked
+        assert_eq!(fsm.current_state(), State::Locked);
+
+        // 1. Insert coin while locked -> should unlock
+        fsm.handle_event(Event::Coin);
+        assert_eq!(fsm.current_state(), State::Unlocked);
+        assert!(calls.borrow().unlocked_called);
+
+        // 2. Pass through while unlocked -> should lock
+        calls.borrow_mut().reset();
+        fsm.handle_event(Event::Pass);
+        assert_eq!(fsm.current_state(), State::Locked);
+        assert!(calls.borrow().locked_called);
+    }
+
+    #[test]
+    fn test_mixed_collection_with_dynamic_dispatch() {
+        // Test that we can still use collections of different turnstile types
+        let turnstiles: Vec<DynamicTurnstileFSM> = vec![
+            DynamicTurnstileFSM::new(Box::new(FakeTurnstile::new().0)),
+            DynamicTurnstileFSM::new(Box::new(FakeTurnstile::new().0)),
+        ];
+
+        for mut fsm in turnstiles {
+            assert_eq!(fsm.current_state(), State::Locked);
+            fsm.handle_event(Event::Coin);
+            assert_eq!(fsm.current_state(), State::Unlocked);
+        }
+    }
+
+    #[test]
+    fn test_performance_comparison() {
+        // This test demonstrates that both approaches work but with different dispatch mechanisms
+        let (generic_turnstile, generic_calls) = FakeTurnstile::new();
+        let (dynamic_turnstile, dynamic_calls) = FakeTurnstile::new();
+
+        // Generic FSM - Static dispatch (zero-cost abstraction)
+        let mut generic_fsm = TurnstileFSM::new(generic_turnstile);
+        
+        // Dynamic FSM - Dynamic dispatch (vtable lookup)
+        let mut dynamic_fsm = DynamicTurnstileFSM::new(Box::new(dynamic_turnstile));
+
+        // Both should behave identically
+        generic_fsm.handle_event(Event::Coin);
+        dynamic_fsm.handle_event(Event::Coin);
+
+        assert_eq!(generic_fsm.current_state(), dynamic_fsm.current_state());
+        assert_eq!(generic_calls.borrow().unlocked_called, dynamic_calls.borrow().unlocked_called);
     }
 }

@@ -1,22 +1,20 @@
 use crate::core::TurnstileMechanism;
 use super::transitions::{State, Event, Transition, create_transitions};
 use std::collections::HashMap;
-use std::sync::LazyLock;
 
-// Lazy static transitions table - created once and shared across all FSM instances
-static TRANSITIONS: LazyLock<HashMap<State, HashMap<Event, Transition>>> = 
-    LazyLock::new(|| create_transitions());
-
-pub struct TurnstileFSM {
+/// Generic finite state machine for turnstiles
+pub struct TurnstileFSM<T: TurnstileMechanism> {
     current_state: State,
-    turnstile: Box<dyn TurnstileMechanism>,
+    turnstile: T,
+    transitions: HashMap<State, HashMap<Event, Transition<T>>>,
 }
 
-impl TurnstileFSM {
-    pub fn new(turnstile: Box<dyn TurnstileMechanism>) -> Self {
+impl<T: TurnstileMechanism> TurnstileFSM<T> {
+    pub fn new(turnstile: T) -> Self {
         Self {
             current_state: State::Locked,
             turnstile,
+            transitions: create_transitions(),
         }
     }
     
@@ -38,17 +36,17 @@ impl TurnstileFSM {
     }
 
     /// Get the transition for the current state and event
-    fn get_transition(&self, event: Event) -> Option<&Transition> {
-        TRANSITIONS
+    fn get_transition(&self, event: Event) -> Option<&Transition<T>> {
+        self.transitions
             .get(&self.current_state)?
             .get(&event)
     }
 
     /// Execute a state transition
-    fn transition_to(&mut self, new_state: State, action: fn(&mut dyn TurnstileMechanism)) {
+    fn transition_to(&mut self, new_state: State, action: fn(&mut T)) {
         let _old_state = self.current_state;
         self.current_state = new_state;
-        action(self.turnstile.as_mut());
+        action(&mut self.turnstile);
         
         // Could add logging here for debugging:
         // log::debug!("FSM transition: {:?} -> {:?}", old_state, new_state);
@@ -61,6 +59,9 @@ impl TurnstileFSM {
         print!("I am the one who reduced the coverage ;)!");
     }
 }
+
+/// Type alias for backward compatibility with existing code that expects trait objects
+pub type DynamicTurnstileFSM = TurnstileFSM<Box<dyn TurnstileMechanism>>;
 
 #[cfg(test)]
 mod tests {
@@ -121,9 +122,9 @@ mod tests {
     }
 
     #[test]
-    fn test_locked_state_coin_event() {
+    fn test_generic_fsm_locked_state_coin_event() {
         let (turnstile, calls) = FakeTurnstile::new();
-        let mut fsm = TurnstileFSM::new(Box::new(turnstile));
+        let mut fsm = TurnstileFSM::new(turnstile);
         
         assert_eq!(fsm.current_state(), State::Locked);
         
@@ -139,9 +140,9 @@ mod tests {
     }
 
     #[test]
-    fn test_locked_state_pass_event() {
+    fn test_generic_fsm_locked_state_pass_event() {
         let (turnstile, calls) = FakeTurnstile::new();
-        let mut fsm = TurnstileFSM::new(Box::new(turnstile));
+        let mut fsm = TurnstileFSM::new(turnstile);
         
         assert_eq!(fsm.current_state(), State::Locked);
         
@@ -157,9 +158,9 @@ mod tests {
     }
 
     #[test]
-    fn test_unlocked_state_coin_event() {
+    fn test_generic_fsm_unlocked_state_coin_event() {
         let (turnstile, calls) = FakeTurnstile::new();
-        let mut fsm = TurnstileFSM::new(Box::new(turnstile));
+        let mut fsm = TurnstileFSM::new(turnstile);
         
         // First unlock the FSM
         fsm.handle_event(Event::Coin);
@@ -180,9 +181,9 @@ mod tests {
     }
 
     #[test]
-    fn test_unlocked_state_pass_event() {
+    fn test_generic_fsm_unlocked_state_pass_event() {
         let (turnstile, calls) = FakeTurnstile::new();
-        let mut fsm = TurnstileFSM::new(Box::new(turnstile));
+        let mut fsm = TurnstileFSM::new(turnstile);
         
         // First unlock the FSM
         fsm.handle_event(Event::Coin);
@@ -203,19 +204,68 @@ mod tests {
     }
 
     #[test]
-    fn test_transitions_are_shared() {
-        // Test that the static transitions are properly initialized
-        let (turnstile1, _) = FakeTurnstile::new();
-        let (turnstile2, _) = FakeTurnstile::new();
+    fn test_zero_cost_abstraction() {
+        // Test that generics work with concrete types (zero-cost abstraction)
+        let (turnstile, calls) = FakeTurnstile::new();
+        let mut fsm: TurnstileFSM<FakeTurnstile> = TurnstileFSM::new(turnstile);
         
-        let fsm1 = TurnstileFSM::new(Box::new(turnstile1));
-        let fsm2 = TurnstileFSM::new(Box::new(turnstile2));
+        // This should compile to direct function calls, no vtable lookup
+        fsm.handle_event(Event::Coin);
+        fsm.handle_event(Event::Pass);
         
-        // Both FSMs should start in the same initial state
-        assert_eq!(fsm1.current_state(), State::Locked);
-        assert_eq!(fsm2.current_state(), State::Locked);
+        let calls_ref = calls.borrow();
+        assert!(calls_ref.unlocked_called);
+        assert!(calls_ref.locked_called);
+    }
+
+    #[test]
+    fn test_backward_compatibility_with_trait_objects() {
+        // Test that we can still use trait objects for dynamic dispatch
+        let (turnstile, calls) = FakeTurnstile::new();
+        let mut fsm = DynamicTurnstileFSM::new(Box::new(turnstile));
         
-        // Test that the LazyLock is working by ensuring consistent behavior
-        // This implicitly tests that TRANSITIONS is properly shared
+        assert_eq!(fsm.current_state(), State::Locked);
+        
+        fsm.handle_event(Event::Coin);
+        
+        assert_eq!(fsm.current_state(), State::Unlocked);
+        
+        let calls_ref = calls.borrow();
+        assert!(calls_ref.unlocked_called);
+    }
+
+    #[test]
+    fn test_multiple_concrete_types() {
+        // Test that different concrete types generate different specialized implementations
+        
+        struct SimpleTurnstile {
+            state: String,
+        }
+        
+        impl SimpleTurnstile {
+            fn new() -> Self {
+                Self { state: "initial".to_string() }
+            }
+        }
+        
+        impl TurnstileMechanism for SimpleTurnstile {
+            fn lock(&mut self) { self.state = "locked".to_string(); }
+            fn unlock(&mut self) { self.state = "unlocked".to_string(); }
+            fn alarm(&mut self) { self.state = "alarm".to_string(); }
+            fn thanks(&mut self) { self.state = "thanks".to_string(); }
+        }
+        
+        // Each of these will get its own monomorphized implementation
+        let (fake_turnstile, _) = FakeTurnstile::new();
+        let simple_turnstile = SimpleTurnstile::new();
+        
+        let mut fake_fsm = TurnstileFSM::new(fake_turnstile);
+        let mut simple_fsm = TurnstileFSM::new(simple_turnstile);
+        
+        fake_fsm.handle_event(Event::Coin);
+        simple_fsm.handle_event(Event::Coin);
+        
+        assert_eq!(fake_fsm.current_state(), State::Unlocked);
+        assert_eq!(simple_fsm.current_state(), State::Unlocked);
     }
 }

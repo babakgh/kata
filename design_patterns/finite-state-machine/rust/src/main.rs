@@ -1,28 +1,61 @@
 mod core;
 
 use core::Turnstile;
-use core::table_impl::{TurnstileFSM, Event};
+use core::table_impl::{TurnstileFSM, DynamicTurnstileFSM, Event};
 
 fn main() {
-    let turnstile = Box::new(Turnstile::new("Main Gate".to_string()));
-    let mut fsm = TurnstileFSM::new(turnstile);
-    
     println!("=== Turnstile FSM Demo ===");
-    println!("Initial state: {:?}", fsm.current_state());
+    
+    // Demonstrate the new generic approach (zero-cost abstraction)
+    println!("\n--- Generic FSM (Static Dispatch) ---");
+    let turnstile = Turnstile::new("Hardware Gate".to_string());
+    let mut generic_fsm = TurnstileFSM::new(turnstile);
+    
+    println!("Initial state: {:?}", generic_fsm.current_state());
     
     println!("\n1. Inserting coin while locked:");
-    fsm.handle_event(Event::Coin);
-    println!("State after coin: {:?}", fsm.current_state());
+    generic_fsm.handle_event(Event::Coin);
+    println!("State after coin: {:?}", generic_fsm.current_state());
     
     println!("\n2. Inserting another coin while unlocked:");
-    fsm.handle_event(Event::Coin);
-    println!("State after second coin: {:?}", fsm.current_state());
+    generic_fsm.handle_event(Event::Coin);
+    println!("State after second coin: {:?}", generic_fsm.current_state());
     
     println!("\n3. Passing through while unlocked:");
-    fsm.handle_event(Event::Pass);
-    println!("State after pass: {:?}", fsm.current_state());
+    generic_fsm.handle_event(Event::Pass);
+    println!("State after pass: {:?}", generic_fsm.current_state());
     
     println!("\n4. Trying to pass while locked:");
-    fsm.handle_event(Event::Pass);
-    println!("State after pass (locked): {:?}", fsm.current_state());
+    generic_fsm.handle_event(Event::Pass);
+    println!("State after pass (locked): {:?}", generic_fsm.current_state());
+    
+    // Demonstrate backward compatibility with trait objects (dynamic dispatch)
+    println!("\n--- Dynamic FSM (Trait Objects) ---");
+    let dynamic_turnstile = Box::new(Turnstile::new("Software Gate".to_string()));
+    let mut dynamic_fsm = DynamicTurnstileFSM::new(dynamic_turnstile);
+    
+    println!("Initial state: {:?}", dynamic_fsm.current_state());
+    
+    println!("\n1. Inserting coin while locked:");
+    dynamic_fsm.handle_event(Event::Coin);
+    println!("State after coin: {:?}", dynamic_fsm.current_state());
+    
+    println!("\n2. Passing through while unlocked:");
+    dynamic_fsm.handle_event(Event::Pass);
+    println!("State after pass: {:?}", dynamic_fsm.current_state());
+    
+    // Demonstrate collection of different turnstile types using trait objects
+    println!("\n--- Mixed Collection (Dynamic Dispatch) ---");
+    let turnstiles: Vec<DynamicTurnstileFSM> = vec![
+        DynamicTurnstileFSM::new(Box::new(Turnstile::new("Gate 1".to_string()))),
+        DynamicTurnstileFSM::new(Box::new(Turnstile::new("Gate 2".to_string()))),
+        DynamicTurnstileFSM::new(Box::new(Turnstile::new("Gate 3".to_string()))),
+    ];
+    
+    println!("Processing {} turnstiles in collection:", turnstiles.len());
+    for (i, mut fsm) in turnstiles.into_iter().enumerate() {
+        println!("  Turnstile {}: {:?} -> ", i + 1, fsm.current_state());
+        fsm.handle_event(Event::Coin);
+        println!("{:?}", fsm.current_state());
+    }
 }
