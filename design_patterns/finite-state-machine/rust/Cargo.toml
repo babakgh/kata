@@ -1,0 +1,14 @@
+[package]
+name = "finite-state-machine"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "finite-state-machine"
+path = "src/main.rs"
+
+[lib]
+name = "finite_state_machine"
+path = "src/lib.rs"
+
+[dependencies]
