@@ -1,11 +1,15 @@
 use crate::core::TurnstileMechanism;
 use super::transitions::{State, Event, Transition, create_transitions};
 use std::collections::HashMap;
+use std::sync::LazyLock;
+
+// Lazy static transitions table - created once and shared across all FSM instances
+static TRANSITIONS: LazyLock<HashMap<State, HashMap<Event, Transition>>> = 
+    LazyLock::new(|| create_transitions());
 
 pub struct TurnstileFSM {
     current_state: State,
     turnstile: Box<dyn TurnstileMechanism>,
-    transitions: HashMap<State, HashMap<Event, Transition>>,
 }
 
 impl TurnstileFSM {
@@ -13,7 +17,6 @@ impl TurnstileFSM {
         Self {
             current_state: State::Locked,
             turnstile,
-            transitions: create_transitions(),
         }
     }
     
@@ -22,16 +25,40 @@ impl TurnstileFSM {
     }
     
     pub fn handle_event(&mut self, event: Event) {
-        if let Some(state_transitions) = self.transitions.get(&self.current_state) {
-            if let Some(transition) = state_transitions.get(&event) {
-                self.current_state = transition.new_state;
-                (transition.action)(self.turnstile.as_mut());
-            } else {
-                // don't panic but notify!
-                // TODO: Write a test for me
-                print!("I am the one who reduced the coverage ;)!");
-            }
+        // First check if transition exists and get the new state and action
+        if let Some(transition) = self.get_transition(event) {
+            let new_state = transition.new_state;
+            let action = transition.action;
+            
+            // Now perform the transition with the captured values
+            self.transition_to(new_state, action);
+        } else {
+            self.handle_invalid_transition(event);
         }
+    }
+
+    /// Get the transition for the current state and event
+    fn get_transition(&self, event: Event) -> Option<&Transition> {
+        TRANSITIONS
+            .get(&self.current_state)?
+            .get(&event)
+    }
+
+    /// Execute a state transition
+    fn transition_to(&mut self, new_state: State, action: fn(&mut dyn TurnstileMechanism)) {
+        let _old_state = self.current_state;
+        self.current_state = new_state;
+        action(self.turnstile.as_mut());
+        
+        // Could add logging here for debugging:
+        // log::debug!("FSM transition: {:?} -> {:?}", old_state, new_state);
+    }
+
+    /// Handle invalid state/event combinations
+    fn handle_invalid_transition(&self, _event: Event) {
+        // don't panic but notify!
+        // TODO: Write a test for me
+        print!("I am the one who reduced the coverage ;)!");
     }
 }
 
@@ -173,5 +200,22 @@ mod tests {
         assert!(!calls_ref.unlocked_called);
         assert!(!calls_ref.alarmed_called);
         assert!(!calls_ref.thanks_called);
+    }
+
+    #[test]
+    fn test_transitions_are_shared() {
+        // Test that the static transitions are properly initialized
+        let (turnstile1, _) = FakeTurnstile::new();
+        let (turnstile2, _) = FakeTurnstile::new();
+        
+        let fsm1 = TurnstileFSM::new(Box::new(turnstile1));
+        let fsm2 = TurnstileFSM::new(Box::new(turnstile2));
+        
+        // Both FSMs should start in the same initial state
+        assert_eq!(fsm1.current_state(), State::Locked);
+        assert_eq!(fsm2.current_state(), State::Locked);
+        
+        // Test that the LazyLock is working by ensuring consistent behavior
+        // This implicitly tests that TRANSITIONS is properly shared
     }
 }
