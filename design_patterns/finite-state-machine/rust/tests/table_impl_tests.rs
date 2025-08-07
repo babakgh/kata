@@ -1,4 +1,4 @@
-use finite_state_machine::core::table_impl::{TurnstileFSM, Event, State};
+use finite_state_machine::core::table_impl::{Event, State, TurnstileFSM};
 use finite_state_machine::core::TurnstileMechanism;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -62,13 +62,13 @@ mod turnstile_fsm_integration_tests {
     fn test_locked_state_with_coin_should_unlock() {
         let (turnstile, calls) = FakeTurnstile::new();
         let mut fsm = TurnstileFSM::new(Box::new(turnstile));
-        
+
         assert_eq!(fsm.current_state(), State::Locked);
-        
+
         fsm.handle_event(Event::Coin);
-        
+
         assert_eq!(fsm.current_state(), State::Unlocked);
-        
+
         let calls_ref = calls.borrow();
         assert!(calls_ref.unlocked_called, "unlock should be called");
         assert!(!calls_ref.locked_called, "lock should not be called");
@@ -80,13 +80,13 @@ mod turnstile_fsm_integration_tests {
     fn test_locked_state_with_pass_should_remain_locked_and_alarm() {
         let (turnstile, calls) = FakeTurnstile::new();
         let mut fsm = TurnstileFSM::new(Box::new(turnstile));
-        
+
         assert_eq!(fsm.current_state(), State::Locked);
-        
+
         fsm.handle_event(Event::Pass);
-        
+
         assert_eq!(fsm.current_state(), State::Locked);
-        
+
         let calls_ref = calls.borrow();
         assert!(calls_ref.alarmed_called, "alarm should be called");
         assert!(!calls_ref.locked_called, "lock should not be called");
@@ -98,18 +98,18 @@ mod turnstile_fsm_integration_tests {
     fn test_unlocked_state_with_coin_should_remain_unlocked_and_thank() {
         let (turnstile, calls) = FakeTurnstile::new();
         let mut fsm = TurnstileFSM::new(Box::new(turnstile));
-        
+
         // First unlock the FSM
         fsm.handle_event(Event::Coin);
         assert_eq!(fsm.current_state(), State::Unlocked);
-        
+
         // Reset the call tracking
         calls.borrow_mut().reset();
-        
+
         fsm.handle_event(Event::Coin);
-        
+
         assert_eq!(fsm.current_state(), State::Unlocked);
-        
+
         let calls_ref = calls.borrow();
         assert!(calls_ref.thanks_called, "thanks should be called");
         assert!(!calls_ref.locked_called, "lock should not be called");
@@ -121,18 +121,18 @@ mod turnstile_fsm_integration_tests {
     fn test_unlocked_state_with_pass_should_lock() {
         let (turnstile, calls) = FakeTurnstile::new();
         let mut fsm = TurnstileFSM::new(Box::new(turnstile));
-        
+
         // First unlock the FSM
         fsm.handle_event(Event::Coin);
         assert_eq!(fsm.current_state(), State::Unlocked);
-        
+
         // Reset the call tracking
         calls.borrow_mut().reset();
-        
+
         fsm.handle_event(Event::Pass);
-        
+
         assert_eq!(fsm.current_state(), State::Locked);
-        
+
         let calls_ref = calls.borrow();
         assert!(calls_ref.locked_called, "lock should be called");
         assert!(!calls_ref.unlocked_called, "unlock should not be called");
@@ -144,27 +144,27 @@ mod turnstile_fsm_integration_tests {
     fn test_complete_workflow() {
         let (turnstile, calls) = FakeTurnstile::new();
         let mut fsm = TurnstileFSM::new(Box::new(turnstile));
-        
+
         // Initial state should be locked
         assert_eq!(fsm.current_state(), State::Locked);
-        
+
         // 1. Insert coin while locked -> should unlock
         fsm.handle_event(Event::Coin);
         assert_eq!(fsm.current_state(), State::Unlocked);
         assert!(calls.borrow().unlocked_called);
-        
+
         // 2. Insert another coin while unlocked -> should thank
         calls.borrow_mut().reset();
         fsm.handle_event(Event::Coin);
         assert_eq!(fsm.current_state(), State::Unlocked);
         assert!(calls.borrow().thanks_called);
-        
+
         // 3. Pass through while unlocked -> should lock
         calls.borrow_mut().reset();
         fsm.handle_event(Event::Pass);
         assert_eq!(fsm.current_state(), State::Locked);
         assert!(calls.borrow().locked_called);
-        
+
         // 4. Try to pass while locked -> should alarm
         calls.borrow_mut().reset();
         fsm.handle_event(Event::Pass);

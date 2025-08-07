@@ -18,20 +18,13 @@ pub type Action = fn(&mut dyn TurnstileMechanism);
 
 #[derive(Clone)]
 pub struct Transition {
-    pub current_state: State,
-    pub event: Event,
     pub new_state: State,
     pub action: Action,
 }
 
 impl Transition {
-    pub fn new(current_state: State, event: Event, new_state: State, action: Action) -> Self {
-        Self {
-            current_state,
-            event,
-            new_state,
-            action,
-        }
+    pub fn new(new_state: State, action: Action) -> Self {
+        Self { new_state, action }
     }
 }
 
@@ -43,30 +36,24 @@ impl Transition {
 /// Unlocked      Pass         Locked            lock
 pub fn create_transitions() -> HashMap<State, HashMap<Event, Transition>> {
     let mut transitions = HashMap::new();
-    
+
     // Locked state transitions
     let mut locked_transitions = HashMap::new();
     locked_transitions.insert(
         Event::Coin,
-        Transition::new(State::Locked, Event::Coin, State::Unlocked, |t| t.unlock()),
+        Transition::new(State::Unlocked, |t| t.unlock()),
     );
-    locked_transitions.insert(
-        Event::Pass,
-        Transition::new(State::Locked, Event::Pass, State::Locked, |t| t.alarm()),
-    );
+    locked_transitions.insert(Event::Pass, Transition::new(State::Locked, |t| t.alarm()));
     transitions.insert(State::Locked, locked_transitions);
-    
+
     // Unlocked state transitions
     let mut unlocked_transitions = HashMap::new();
     unlocked_transitions.insert(
         Event::Coin,
-        Transition::new(State::Unlocked, Event::Coin, State::Unlocked, |t| t.thanks()),
+        Transition::new(State::Unlocked, |t| t.thanks()),
     );
-    unlocked_transitions.insert(
-        Event::Pass,
-        Transition::new(State::Unlocked, Event::Pass, State::Locked, |t| t.lock()),
-    );
+    unlocked_transitions.insert(Event::Pass, Transition::new(State::Locked, |t| t.lock()));
     transitions.insert(State::Unlocked, unlocked_transitions);
-    
+
     transitions
 }
